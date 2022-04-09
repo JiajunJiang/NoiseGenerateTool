@@ -24,7 +24,5 @@ namespace Editor
         Size256 = 1 << 8,
         Size512 = 1 << 9,
         Size1024 = 1 << 10,
-        Size2048 = 1 << 11,
-        Size4196 = 1 << 12,
     }
 }

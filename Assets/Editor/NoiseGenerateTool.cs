@@ -25,6 +25,10 @@ public class NoiseGenerateTool : EditorWindow
 
     private Texture2D currentTexture { get; set; }
 
+    private float Scale { get; set; } = 1.0f;
+
+    private int RandomOffset { get; set; }
+
     private void OnGUI()
     {
         GUILayout.BeginHorizontal();
@@ -39,11 +43,12 @@ public class NoiseGenerateTool : EditorWindow
             currentTexture = GenerateTexture();
         }
 
+        int offset = 30;
+        int previewSize = 256;
+        
         if (currentTexture != null)
         {
-            int offset = 30;
-            int previewSize = 256;
-            GUILayout.BeginArea(new Rect(0,90,previewSize,previewSize + offset));
+            GUILayout.BeginArea(new Rect(0, 65, previewSize, previewSize + offset));
             // GUILayout.BeginHorizontal();
             GUILayout.Label("Preview:");
             EditorGUI.DrawPreviewTexture(new Rect(0, offset, previewSize, previewSize), currentTexture);
@@ -51,9 +56,29 @@ public class NoiseGenerateTool : EditorWindow
             GUILayout.EndArea();
         }
 
+        GUILayout.BeginArea(new Rect(0, 80 + previewSize + offset, 200, 200));
+        if (CurrentNoiseType == NoiseType.PerlinNoise)
+        {
+            var lastScale = Scale;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Scale:");
+            Scale = EditorGUILayout.Slider(Scale, 0.0f, 100.0f);
+            GUILayout.EndHorizontal();
+            if (lastScale != Scale)
+            {
+                currentTexture = GenerateTexture();
+            }
+            if (GUILayout.Button("Random"))
+            {
+                RandomOffset = seed.Next(0, 100);
+                currentTexture = GenerateTexture();
+            }
+        }
         if (GUILayout.Button("Save"))
         {
+            
         }
+        GUILayout.EndArea();
     }
 
     private Texture2D GenerateTexture()
@@ -66,7 +91,7 @@ public class NoiseGenerateTool : EditorWindow
         {
             for (int y = 0; y < size; y++)
             {
-                Color color = CalculateColor(x, y);
+                Color color = CalculateColor(x, y, size);
                 texture.SetPixel(x, y, color);
             }
         }
@@ -76,19 +101,27 @@ public class NoiseGenerateTool : EditorWindow
         return texture;
     }
 
-    private Color CalculateColor(int x, int y)
+    private Color CalculateColor(int x, int y, int size)
     {
         switch (CurrentNoiseType)
         {
             case NoiseType.WhiteNoise:
-                return WhiteNoise(x, y);
+                return WhiteNoise();
+            case NoiseType.PerlinNoise:
+                return PerlinNoise(x, y, size);
         }
 
         return Color.black;
     }
 
-    private Color WhiteNoise(int x, int y)
+    private Color WhiteNoise()
     {
         return seed.Next(0, 2) == 0 ? Color.black : Color.white;
+    }
+
+    private Color PerlinNoise(int x, int y, int size)   
+    {
+        float sample = Mathf.PerlinNoise((float) x / size * Scale + RandomOffset, (float) y / size * Scale + RandomOffset);
+        return new Color(sample, sample, sample);
     }
 }
