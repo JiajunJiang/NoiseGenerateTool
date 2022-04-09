@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Editor;
 using UnityEditor;
 using UnityEngine;
@@ -86,9 +87,20 @@ public class NoiseGenerateTool : EditorWindow
 
         if (GUILayout.Button("Save"))
         {
+            Save();
         }
 
         GUILayout.EndArea();
+    }
+
+    private void Save()
+    {
+        string fileName = $"{CurrentNoiseType.ToString()}_{DateTime.Now.Ticks}";
+        string path = $"{Application.dataPath}/{fileName}.png";
+        byte[] bytes = currentTexture.EncodeToPNG();
+        File.WriteAllBytes(path, bytes);//写入文件里面
+        Debug.Log($"Save {path} Success!");
+        AssetDatabase.Refresh();
     }
 
     private Texture2D GenerateTexture()
