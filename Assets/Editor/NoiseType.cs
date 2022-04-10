@@ -7,8 +7,7 @@ namespace Editor
         ValueNoise = 2,
         SimplexNoise = 3,
         WorleyNoise = 4,
-        VoronoiNoise = 5,
-        FBMNoise = 6,
+        FBMNoise = 5,
     }
 
     public enum TextureSize

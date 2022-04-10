@@ -58,7 +58,7 @@ public class NoiseGenerateTool : EditorWindow
         }
 
         GUILayout.BeginArea(new Rect(0, 80 + previewSize + offset, 200, 200));
-        if (CurrentNoiseType == NoiseType.PerlinNoise)
+        if (CurrentNoiseType == NoiseType.PerlinNoise || CurrentNoiseType == NoiseType.WorleyNoise)
         {
             var lastScale = Scale;
             GUILayout.BeginHorizontal();
@@ -72,7 +72,7 @@ public class NoiseGenerateTool : EditorWindow
 
             if (GUILayout.Button("Random"))
             {
-                RandomOffset = seed.Next(0, (int)TextureSize * (int)TextureSize);
+                RandomOffset = seed.Next(0, (int) TextureSize * (int) TextureSize);
                 currentTexture = GenerateTexture();
             }
         }
@@ -80,7 +80,7 @@ public class NoiseGenerateTool : EditorWindow
         {
             if (GUILayout.Button("Random"))
             {
-                RandomOffset = seed.Next(0, (int)TextureSize * (int)TextureSize);
+                RandomOffset = seed.Next(0, (int) TextureSize * (int) TextureSize);
                 currentTexture = GenerateTexture();
             }
         }
@@ -98,7 +98,7 @@ public class NoiseGenerateTool : EditorWindow
         string fileName = $"{CurrentNoiseType.ToString()}_{DateTime.Now.Ticks}";
         string path = $"{Application.dataPath}/{fileName}.png";
         byte[] bytes = currentTexture.EncodeToPNG();
-        File.WriteAllBytes(path, bytes);//写入文件里面
+        File.WriteAllBytes(path, bytes); //写入文件里面
         Debug.Log($"Save {path} Success!");
         AssetDatabase.Refresh();
     }
@@ -133,6 +133,8 @@ public class NoiseGenerateTool : EditorWindow
                 return PerlinNoise(x, y, size);
             case NoiseType.ValueNoise:
                 return ValueNoise(x, y);
+            case NoiseType.WorleyNoise:
+                return WorleyNoise(x, y);
         }
 
         return Color.black;
@@ -174,6 +176,31 @@ public class NoiseGenerateTool : EditorWindow
     #endregion
 
 
+    private Color WorleyNoise(int x, int y)
+    {
+        float min_dist = 10.0f;
+        float size = (float) TextureSize;
+        Vector2 v2 = new Vector2((x + RandomOffset) / size * Scale, (y + RandomOffset) / size * Scale);
+
+        Vector2 id = floor(v2);
+
+        for (int m = -1; m <= 1; m++)
+        {
+            for (int n = -1; n <= 1; n++)
+            {
+                Vector2 searchPoint = id + new Vector2(m, n);
+
+                searchPoint += random2(searchPoint);
+
+                float dist = Vector2.Distance(v2, searchPoint);
+                min_dist = Mathf.Min(min_dist, dist);
+            }
+        }
+
+        return new Color(min_dist, min_dist, min_dist);
+    }
+
+
     #region Math
 
     private Vector2 floor(Vector2 v2)
@@ -191,9 +218,21 @@ public class NoiseGenerateTool : EditorWindow
         return new Vector2(fract(v2.x), fract(v2.y));
     }
 
+    Vector2 mod(Vector2 coord, float a)
+    {
+        return new Vector2(coord.x % a, coord.y % a);
+    }
+
     private float random(Vector2 v2)
     {
         return fract(Mathf.Sin(Vector2.Dot(v2, new Vector2(13.0909f, 783.342f))) * 423234.323f);
+    }
+
+    private Vector2 random2(Vector2 v2)
+    {
+        v2 = mod(v2, 10000.0f);
+        return fract((new Vector2(Mathf.Sin(Vector2.Dot(v2, new Vector2(127.1f, 311.7f))),
+            Mathf.Sin(Vector2.Dot(v2, new Vector2(269.5f, 183.3f))))) * 43758.5453f);
     }
 
     private float mix(float x, float y, float level)
